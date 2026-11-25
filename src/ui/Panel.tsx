@@ -179,46 +179,48 @@ export function Panel({ open, onClose }: PanelProps) {
             </ul>
           </div>
 
-          {tab === "overview" && (
-            <div>
-              <p>
-                本地看过索引: <strong>{indexSize}</strong> 条
-              </p>
-              <p>当前页面: {PAGE_LABEL[pageKind()] ?? "其他页面"}</p>
-              {busy && <progress className="progress is-small is-info" max="100" />}
-              {busy && <p className="jdk-hint">{busy}</p>}
-              <div className="buttons" style={{ marginTop: 12 }}>
-                <button className="button is-small is-info" disabled={Boolean(busy)} onClick={runSync}>
-                  从「看过」列表同步索引
-                </button>
-                {busy && (
-                  <button className="button is-small" onClick={() => (stopRef.current = true)}>
-                    停止
+          <div className="jdk-tab-content">
+            {tab === "overview" && (
+              <div>
+                <p>
+                  本地看过索引: <strong>{indexSize}</strong> 条
+                </p>
+                <p>当前页面: {PAGE_LABEL[pageKind()] ?? "其他页面"}</p>
+                {busy && <progress className="progress is-small is-info" max="100" />}
+                {busy && <p className="jdk-hint">{busy}</p>}
+                <div className="buttons" style={{ marginTop: 12 }}>
+                  <button className="button is-small is-info" disabled={Boolean(busy)} onClick={runSync}>
+                    从「看过」列表同步索引
                   </button>
-                )}
+                  {busy && (
+                    <button className="button is-small" onClick={() => (stopRef.current = true)}>
+                      停止
+                    </button>
+                  )}
+                </div>
+                <p className="jdk-hint">同步会逐页读取你账号下的看过列表, 大约每页 0.4 秒, 只读不改数据。</p>
               </div>
-              <p className="jdk-hint">同步会逐页读取你账号下的看过列表, 大约每页 0.4 秒, 只读不改数据。</p>
-            </div>
-          )}
+            )}
 
-          {tab === "settings" && settingsForm}
+            {tab === "settings" && settingsForm}
 
-          {tab === "data" && (
-            <div>
-              <div className="buttons">
-                <button className="button is-small" onClick={exportIndexFile}>
-                  导出本地索引
-                </button>
-                <button className="button is-small" onClick={onPickFile}>
-                  导入记录
-                </button>
-                <button className="button is-small is-danger is-light" onClick={onClear}>
-                  清空索引
-                </button>
+            {tab === "data" && (
+              <div>
+                <div className="buttons">
+                  <button className="button is-small" onClick={exportIndexFile}>
+                    导出本地索引
+                  </button>
+                  <button className="button is-small" onClick={onPickFile}>
+                    导入记录
+                  </button>
+                  <button className="button is-small is-danger is-light" onClick={onClear}>
+                    清空索引
+                  </button>
+                </div>
+                <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={onFileChange} />
               </div>
-              <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={onFileChange} />
-            </div>
-          )}
+            )}
+          </div>
         </section>
         <footer className="modal-card-foot">
           <span className="jdk-hint">设置会自动保存</span>

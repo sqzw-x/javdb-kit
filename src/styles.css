@@ -51,7 +51,37 @@
   opacity: 0;
   transform: translateY(8px);
 }
-/* 批量管理后面的导出按钮组 */
-.batch-toolbar [data-jdk-actions] {
-  margin-left: 0.5rem;
+/* 没有 toolbar 的列表页 (清单详情): 让「批量管理」与导出按钮排在同一行 */
+.batch-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+}
+
+.batch-toolbar > .batch-actions {
+  flex: 1 1 auto;
+}
+
+.jdk-inline-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.jdk-inline-actions .button {
+  margin-bottom: 0;
+}
+
+/* 面包屑兜底 */
+.breadcrumb .jdk-inline-actions {
+  margin: 0;
+}
+
+/* 面板内容区固定高度, 切换 tab 时不抖动 */
+.jdk-tab-content {
+  height: 340px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
