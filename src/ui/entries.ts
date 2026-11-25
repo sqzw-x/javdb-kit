@@ -62,12 +62,19 @@ function buildButtons(): HTMLDivElement {
 }
 
 /**
- * 列表页的导出按钮:
- * - 普通列表页放进站点的 .toolbar
- * - 清单详情页 (/users/list_detail) 没有 toolbar, 放进面包屑
+ * 列表页的导出按钮, 位置优先级:
+ * 1. 「批量管理」按钮后面 (有 batch-select 的列表页)
+ * 2. 站点 .toolbar 末尾
+ * 3. 清单详情页面包屑
  */
 export function installListActions() {
   if (!document.querySelector(".item") || document.querySelector("[data-jdk-actions]")) return;
+
+  const batchManage = document.querySelector<HTMLElement>('[data-batch-select-target="manage"]');
+  if (batchManage) {
+    batchManage.insertAdjacentElement("afterend", buildButtons());
+    return;
+  }
 
   const toolbar = document.querySelector<HTMLElement>(".toolbar");
   if (toolbar) {

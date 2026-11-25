@@ -51,3 +51,7 @@
   opacity: 0;
   transform: translateY(8px);
 }
+/* 批量管理后面的导出按钮组 */
+.batch-toolbar [data-jdk-actions] {
+  margin-left: 0.5rem;
+}
