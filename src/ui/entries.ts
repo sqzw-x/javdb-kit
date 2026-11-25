@@ -42,9 +42,9 @@ async function exportCurrentList(format: "json" | "csv") {
   }
 }
 
-function buildButtons(): HTMLDivElement {
+function buildButtons(containerClass = "buttons are-small"): HTMLDivElement {
   const buttons = document.createElement("div");
-  buttons.className = "buttons are-small";
+  buttons.className = containerClass;
   buttons.dataset[ACTIONS_FLAG] = "1";
 
   const make = (label: string, onClick: () => void) => {
@@ -63,18 +63,12 @@ function buildButtons(): HTMLDivElement {
 
 /**
  * 列表页的导出按钮, 位置优先级:
- * 1. 「批量管理」按钮后面 (有 batch-select 的列表页)
- * 2. 站点 .toolbar 末尾
- * 3. 清单详情页面包屑
+ * 1. 站点 .toolbar 末尾 (普通列表页, 首页 / 演员 / 搜索 / 看过 ...)
+ * 2. 「批量管理」按钮后面 (清单详情页等没有 toolbar 的列表)
+ * 3. 面包屑 (最终兜底)
  */
 export function installListActions() {
   if (!document.querySelector(".item") || document.querySelector("[data-jdk-actions]")) return;
-
-  const batchManage = document.querySelector<HTMLElement>('[data-batch-select-target="manage"]');
-  if (batchManage) {
-    batchManage.insertAdjacentElement("afterend", buildButtons());
-    return;
-  }
 
   const toolbar = document.querySelector<HTMLElement>(".toolbar");
   if (toolbar) {
@@ -85,10 +79,16 @@ export function installListActions() {
     return;
   }
 
+  const batchManage = document.querySelector<HTMLElement>('[data-batch-select-target="manage"]');
+  if (batchManage) {
+    batchManage.insertAdjacentElement("afterend", buildButtons("jdk-inline-actions"));
+    return;
+  }
+
   const breadcrumb = document.querySelector<HTMLElement>(".breadcrumb ul");
   if (breadcrumb) {
     const item = document.createElement("li");
-    item.append(buildButtons());
+    item.append(buildButtons("jdk-inline-actions"));
     breadcrumb.append(item);
   }
 }
