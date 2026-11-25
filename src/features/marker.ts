@@ -1,5 +1,5 @@
 import type { Settings } from "../config";
-import { CARD_SELECTOR, parseCard } from "../site";
+import { CARD_SELECTOR, pageKind, parseCard } from "../site";
 import type { WatchedIndex } from "../types";
 
 function markItem(item: Element, index: WatchedIndex, settings: Settings) {
@@ -17,9 +17,9 @@ function markItem(item: Element, index: WatchedIndex, settings: Settings) {
   (item.querySelector(".cover") ?? item).append(badge);
 }
 
-/** 给列表页卡片打上本地索引里的看过标记 */
+/** 给列表页卡片打上本地索引里的看过标记 (「看过」列表本身不需要重复标记) */
 export function markList(index: WatchedIndex, settings: Settings) {
-  if (!settings.marker.enabled) return;
+  if (!settings.marker.enabled || pageKind() === "watched") return;
 
   const markAll = () => {
     for (const item of document.querySelectorAll(CARD_SELECTOR)) markItem(item, index, settings);

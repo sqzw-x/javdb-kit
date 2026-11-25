@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from "../config";
 import { crawlList, download, syncWatched, timestamp, toCsv, toJson } from "../features/exporter";
+import { markList } from "../features/marker";
 import { pageKind } from "../site";
 import { clearIndex, exportIndex, loadIndex, mergeRecords, saveIndex } from "../store";
 import { toast } from "./toast";
@@ -48,6 +49,8 @@ export function Panel({ open, onClose }: PanelProps) {
       });
       saveIndex(index);
       setIndexSize(index.urls.size);
+      // 同步完成后立刻刷新当前页徽标, 不必手动刷新
+      markList(index, settings);
       toast(`已同步 ${result.pages} 页, 新增 ${result.added} 条`, "success");
     } catch (err) {
       console.error(err);
@@ -55,7 +58,7 @@ export function Panel({ open, onClose }: PanelProps) {
     } finally {
       setBusy(null);
     }
-  }, [busy, settings.exporter.interval]);
+  }, [busy, settings]);
 
   const runExport = useCallback(
     async (format: "json" | "csv") => {
