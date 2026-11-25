@@ -1,0 +1,53 @@
+#jdk-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+}
+
+#jdk-root .modal {
+  pointer-events: auto;
+}
+
+/* 「可能看过」用站点里「想看」的黄色, 与绿色「看过」区分 */
+#jdk-root .jdk-maybe,
+.review.jdk-maybe {
+  background-color: #ffe08a;
+  color: #333;
+}
+
+.jdk-modal .modal-card {
+  width: min(720px, 92vw);
+}
+
+.jdk-hint {
+  font-size: 0.75rem;
+  color: #7a7a7a;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
+.jdk-settings .checkbox {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.jdk-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483001;
+  max-width: 320px;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 15%);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.jdk-toast--leaving {
+  opacity: 0;
+  transform: translateY(8px);
+}
