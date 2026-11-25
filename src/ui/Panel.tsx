@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from "../config";
-import { crawlList, download, syncWatched, timestamp, toCsv, toJson } from "../features/exporter";
+import { download, syncWatched, timestamp } from "../features/exporter";
 import { markList } from "../features/marker";
 import { pageKind } from "../site";
 import { clearIndex, exportIndex, loadIndex, mergeRecords, saveIndex } from "../store";
@@ -59,31 +59,6 @@ export function Panel({ open, onClose }: PanelProps) {
       setBusy(null);
     }
   }, [busy, settings]);
-
-  const runExport = useCallback(
-    async (format: "json" | "csv") => {
-      if (busy) return;
-      stopRef.current = false;
-      setBusy("准备导出…");
-      try {
-        const result = await crawlList(location.href, {
-          interval: settings.exporter.interval,
-          shouldStop: () => stopRef.current,
-          onProgress: ({ page, cards }) => setBusy(`导出中: 第 ${page} 页 / 已收集 ${cards} 条`),
-        });
-        const content = format === "json" ? toJson(result.cards) : toCsv(result.cards);
-        const mime = format === "json" ? "application/json" : "text/csv";
-        download(`javdb-${pageKind()}-${timestamp()}.${format}`, content, mime);
-        toast(`已导出 ${result.cards.length} 条`, "success");
-      } catch (err) {
-        console.error(err);
-        toast(`导出失败: ${(err as Error).message}`, "danger");
-      } finally {
-        setBusy(null);
-      }
-    },
-    [busy, settings.exporter.interval],
-  );
 
   const exportIndexFile = useCallback(() => {
     download(`javdb-kit-watched-${timestamp()}.json`, JSON.stringify(exportIndex(loadIndex()), null, 2));
@@ -242,21 +217,6 @@ export function Panel({ open, onClose }: PanelProps) {
                 </button>
               </div>
               <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={onFileChange} />
-              <hr />
-              <p className="jdk-hint">导出当前列表的全部页 (顺着分页抓取):</p>
-              <div className="buttons">
-                <button className="button is-small is-info" disabled={Boolean(busy)} onClick={() => runExport("json")}>
-                  导出 JSON
-                </button>
-                <button
-                  className="button is-small is-info is-light"
-                  disabled={Boolean(busy)}
-                  onClick={() => runExport("csv")}
-                >
-                  导出 CSV
-                </button>
-              </div>
-              {busy && <p className="jdk-hint">{busy}</p>}
             </div>
           )}
         </section>

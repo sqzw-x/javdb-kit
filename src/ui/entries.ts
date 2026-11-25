@@ -4,7 +4,7 @@ import { openPanel } from "./mount";
 import { toast } from "./toast";
 
 const NAV_ID = "jdk-nav-entry";
-const TOOLBAR_FLAG = "jdkToolbar";
+const ACTIONS_FLAG = "jdkActions";
 
 /** 顶栏用户菜单里的入口, 与「跟随系统 / 简体中文 / 用户」并排 */
 export function installNavEntry() {
@@ -42,31 +42,46 @@ async function exportCurrentList(format: "json" | "csv") {
   }
 }
 
-/** 列表页工具栏里的导入/导出按钮, 沿用站点的 button-group 结构 */
-export function installToolbar() {
-  const toolbar = document.querySelector<HTMLElement>(".toolbar");
-  if (!toolbar || toolbar.dataset[TOOLBAR_FLAG] === "1") return;
-  toolbar.dataset[TOOLBAR_FLAG] = "1";
-
-  const group = document.createElement("div");
-  group.className = "button-group";
-
+function buildButtons(): HTMLDivElement {
   const buttons = document.createElement("div");
-  buttons.className = "buttons has-addons";
+  buttons.className = "buttons are-small";
+  buttons.dataset[ACTIONS_FLAG] = "1";
 
-  const makeButton = (label: string, onClick: () => void, extraClass = "") => {
+  const make = (label: string, onClick: () => void) => {
     const button = document.createElement("button");
-    button.className = `button is-small ${extraClass}`.trim();
     button.type = "button";
+    button.className = "button is-small";
     button.textContent = label;
     button.addEventListener("click", onClick);
     buttons.append(button);
   };
 
-  makeButton("导出 JSON", () => void exportCurrentList("json"));
-  makeButton("CSV", () => void exportCurrentList("csv"));
-  makeButton("JavDB Kit", openPanel, "is-light");
+  make("导出 JSON", () => void exportCurrentList("json"));
+  make("CSV", () => void exportCurrentList("csv"));
+  return buttons;
+}
 
-  group.append(buttons);
-  toolbar.append(group);
+/**
+ * 列表页的导出按钮:
+ * - 普通列表页放进站点的 .toolbar
+ * - 清单详情页 (/users/list_detail) 没有 toolbar, 放进面包屑
+ */
+export function installListActions() {
+  if (!document.querySelector(".item") || document.querySelector("[data-jdk-actions]")) return;
+
+  const toolbar = document.querySelector<HTMLElement>(".toolbar");
+  if (toolbar) {
+    const group = document.createElement("div");
+    group.className = "button-group";
+    group.append(buildButtons());
+    toolbar.append(group);
+    return;
+  }
+
+  const breadcrumb = document.querySelector<HTMLElement>(".breadcrumb ul");
+  if (breadcrumb) {
+    const item = document.createElement("li");
+    item.append(buildButtons());
+    breadcrumb.append(item);
+  }
 }

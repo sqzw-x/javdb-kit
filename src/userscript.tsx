@@ -8,7 +8,7 @@ import { markList } from "@/features/marker";
 import { setupPlayer } from "@/features/player";
 import { pageKind, currentVideoId } from "@/site";
 import { loadIndex, saveIndex } from "@/store";
-import { installNavEntry, installToolbar } from "@/ui/entries";
+import { installListActions, installNavEntry } from "@/ui/entries";
 import { openPanel } from "@/ui/mount";
 import { toast } from "@/ui/toast";
 
@@ -22,7 +22,7 @@ function boot() {
   if (pageKind() === "video") setupPlayer(settings);
 
   installNavEntry();
-  installToolbar();
+  installListActions();
 
   GM_registerMenuCommand("JavDB Kit: 打开面板", openPanel);
   GM_registerMenuCommand("JavDB Kit: 标记当前影片为看过(本地)", () => {
