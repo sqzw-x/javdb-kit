@@ -67,6 +67,43 @@ export function mergeRecords(index: WatchedIndex, records: unknown): number {
   return added;
 }
 
+/**
+ * 手动加入一条记录。
+ * 输入可以是详情页 URL、/v/{id}、纯 id, 或番号 (ABC-123)。
+ * 纯 id 会进 urls 集合; 番号会进 numbers 集合用于「可能看过」兜底。
+ */
+export function addRecord(
+  index: WatchedIndex,
+  rawInput: string,
+): { added: boolean; kind: "url" | "number" | "none"; value: string } {
+  const input = rawInput.trim();
+  if (!input) return { added: false, kind: "none", value: "" };
+
+  const fromUrl = input.match(/\/v\/([^/?#\s]+)/)?.[1];
+  const bareId = fromUrl ?? (/^[A-Za-z0-9]{4,10}$/.test(input) ? input : null);
+  if (bareId) {
+    const existed = index.urls.has(bareId);
+    index.urls.add(bareId);
+    saveIndex(index);
+    return { added: !existed, kind: "url", value: bareId };
+  }
+
+  const number = input.toUpperCase();
+  const existed = index.numbers.has(number);
+  index.numbers.add(number);
+  saveIndex(index);
+  return { added: !existed, kind: "number", value: number };
+}
+
+/** 详情页「看过」成功后调用, 把当前影片写进本地索引 */
+export function markCurrentVideo(urlId: string) {
+  const index = loadIndex();
+  const existed = index.urls.has(urlId);
+  index.urls.add(urlId);
+  saveIndex(index);
+  return { added: !existed, total: index.urls.size };
+}
+
 export function exportIndex(index: WatchedIndex) {
   return [...index.urls].toSorted().map((urlId) => ({ urlId }));
 }

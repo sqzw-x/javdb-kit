@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from "../
 import { download, syncWatched, timestamp } from "../features/exporter";
 import { markList } from "../features/marker";
 import { pageKind } from "../site";
-import { clearIndex, exportIndex, loadIndex, mergeRecords, saveIndex } from "../store";
+import { addRecord, clearIndex, exportIndex, loadIndex, mergeRecords, saveIndex } from "../store";
 import { toast } from "./toast";
 
 type Tab = "overview" | "settings" | "data";
@@ -30,6 +30,7 @@ export function Panel({ open, onClose }: PanelProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const stopRef = useRef(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const [manualInput, setManualInput] = useState("");
 
   const updateSettings = useCallback((next: Settings) => {
     setSettings(next);
@@ -80,6 +81,18 @@ export function Panel({ open, onClose }: PanelProps) {
       toast(`导入失败: ${(err as Error).message}`, "danger");
     }
   }, []);
+
+  const onManualAdd = useCallback(() => {
+    const result = addRecord(loadIndex(), manualInput);
+    if (result.kind === "none") {
+      toast("请输入链接、影片 ID 或番号", "danger");
+      return;
+    }
+    setIndexSize(loadIndex().urls.size);
+    setManualInput("");
+    const label = result.kind === "url" ? `影片 ${result.value}` : `番号 ${result.value}`;
+    toast(result.added ? `已添加 ${label}` : `${label} 已在索引中`, result.added ? "success" : "info");
+  }, [manualInput]);
 
   const onClear = useCallback(() => {
     if (!window.confirm("确定清空本地看过索引吗?")) return;
@@ -218,6 +231,26 @@ export function Panel({ open, onClose }: PanelProps) {
                   </button>
                 </div>
                 <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={onFileChange} />
+                <hr />
+                <p className="jdk-hint">手动添加单条记录 (支持详情页链接、影片 ID 或番号):</p>
+                <div className="field has-addons">
+                  <div className="control is-expanded">
+                    <input
+                      className="input is-small"
+                      placeholder="https://javdb.com/v/xxxx 或 ABC-123"
+                      value={manualInput}
+                      onChange={(e) => setManualInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") onManualAdd();
+                      }}
+                    />
+                  </div>
+                  <div className="control">
+                    <button className="button is-small is-info" onClick={onManualAdd} disabled={!manualInput.trim()}>
+                      添加
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
