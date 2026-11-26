@@ -2,7 +2,7 @@ import { loadIndex, saveIndex } from "@/store";
 
 import { batchMarkWatched } from "../features/batchMark";
 import { crawlList, download, timestamp, toCsv, toJson } from "../features/exporter";
-import { pageKind, parseCards } from "../site";
+import { pageKind } from "../site";
 import { openPanel } from "./mount";
 import { toast } from "./toast";
 
@@ -99,23 +99,31 @@ export function installListActions() {
     breadcrumb.append(item);
   }
 }
-/** 把当前列表页的所有影片标记为看过, 并同步写入本地索引 */
+/** 把整个列表 (顺着分页) 的影片标记为看过, 并同步写入本地索引 */
 async function markListAsWatched(container: HTMLElement) {
-  const cards = parseCards(document);
-  if (cards.length === 0) {
-    toast("当前页面没有可标记的影片", "danger");
-    return;
-  }
-  if (!window.confirm(`把当前页的 ${cards.length} 部影片标记为看过?`)) return;
-
   const buttons = [...container.querySelectorAll("button")];
   for (const button of buttons) button.disabled = true;
 
   const index = loadIndex();
   try {
+    toast("开始收集列表…");
+    const { cards } = await crawlList(location.href, {
+      interval: 400,
+      onProgress: ({ page, cards: total }) => toast(`收集第 ${page} 页 / ${total} 条`, "info"),
+    });
+
+    if (cards.length === 0) {
+      toast("当前页面没有可标记的影片", "danger");
+      return;
+    }
+    if (!window.confirm(`把整个列表的 ${cards.length} 部影片标记为看过?`)) return;
+
     const result = await batchMarkWatched(
       cards.map((card) => card.urlId),
-      { interval: 600, onProgress: (done, total) => toast(`标记中 ${done}/${total}`, "info") },
+      {
+        interval: 600,
+        onProgress: (done, total) => toast(`标记中 ${done}/${total}`, "info"),
+      },
     );
     for (const card of cards) index.urls.add(card.urlId);
     saveIndex(index);
