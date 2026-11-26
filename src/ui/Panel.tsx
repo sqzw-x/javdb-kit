@@ -31,10 +31,10 @@ export function Panel({ open, onClose }: PanelProps) {
   const stopRef = useRef(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [manualInput, setManualInput] = useState("");
-  // indexSize 变化时重新读取索引, 展示 URL / 番号 / 两者兼备的数量
+  // indexSize 变化时重新读取索引; 三个分类互斥, 相加等于总数
   void indexSize;
   const breakdown = indexBreakdown(loadIndex());
-  const breakdownLabel = `(URL ${breakdown.urls} / 番号 ${breakdown.numbers} / 带番号 ${breakdown.both})`;
+  const breakdownLabel = `(仅 URL ${breakdown.urlOnly} / 仅番号 ${breakdown.numberOnly} / 两者都有 ${breakdown.both})`;
 
   const updateSettings = useCallback((next: Settings) => {
     setSettings(next);

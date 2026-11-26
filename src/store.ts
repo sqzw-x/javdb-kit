@@ -103,11 +103,27 @@ export function indexSize(index: WatchedIndex): number {
   return index.records.length;
 }
 
-/** 索引里的 url 与番号数量, 用于面板展示 */
-export function indexBreakdown(index: WatchedIndex): { total: number; urls: number; numbers: number; both: number } {
+/**
+ * 索引的记录构成, 三个分类互斥, 相加等于总数。
+ * - urlOnly: 只有 urlId
+ * - numberOnly: 只有番号
+ * - both: 两者都有
+ */
+export function indexBreakdown(index: WatchedIndex): {
+  total: number;
+  urlOnly: number;
+  numberOnly: number;
+  both: number;
+} {
+  let urlOnly = 0;
+  let numberOnly = 0;
   let both = 0;
-  for (const record of index.records) if (record.urlId && record.number) both += 1;
-  return { total: index.records.length, urls: index.urls.size, numbers: index.numbers.size, both };
+  for (const record of index.records) {
+    if (record.urlId && record.number) both += 1;
+    else if (record.urlId) urlOnly += 1;
+    else numberOnly += 1;
+  }
+  return { total: index.records.length, urlOnly, numberOnly, both };
 }
 
 /** 首次运行时把旧脚本写在 localStorage 里的数据迁移过来 */
