@@ -1,5 +1,6 @@
 import { getHtml, parseHtml } from "../net";
 import { paginationNext, parseCards } from "../site";
+import { addRecordToIndex } from "../store";
 import type { VideoCard, WatchedIndex } from "../types";
 
 export interface CrawlOptions {
@@ -105,11 +106,7 @@ export async function syncWatched(
   const { cards, pages, stopped } = await crawlList(start, options);
   let added = 0;
   for (const card of cards) {
-    if (!index.urls.has(card.urlId)) {
-      index.urls.add(card.urlId);
-      added += 1;
-    }
-    index.numbers.add(card.number);
+    if (addRecordToIndex(index, { urlId: card.urlId, number: card.number }).added) added += 1;
   }
   return { pages, added, stopped };
 }

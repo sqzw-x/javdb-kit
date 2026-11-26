@@ -1,4 +1,4 @@
-import { loadIndex, saveIndex } from "@/store";
+import { addRecordToIndex, loadIndex, saveIndex } from "@/store";
 
 import { batchMarkWatched } from "../features/batchMark";
 import { crawlList, download, timestamp, toCsv, toJson } from "../features/exporter";
@@ -113,12 +113,13 @@ async function markListAsWatched(container: HTMLElement) {
       interval: 400,
       onProgress: ({ page, cards }) => toast(`第 ${page} 页 / 已处理 ${cards} 条`, "info"),
       onPage: async (cards) => {
+        const numbers = new Map(cards.map((card) => [card.urlId, card.number]));
         const result = await batchMarkWatched(
           cards.map((card) => card.urlId),
           {
             interval: 600,
             onMarked: (urlId) => {
-              index.urls.add(urlId);
+              addRecordToIndex(index, { urlId, number: numbers.get(urlId) ?? "" });
               saveIndex(index);
             },
           },

@@ -3,8 +3,8 @@ import { GM_registerMenuCommand } from "vite-plugin-monkey/dist/client";
 import { loadSettings } from "@/config";
 import { markList } from "@/features/marker";
 import { setupPlayer } from "@/features/player";
-import { currentVideoId, pageKind } from "@/site";
-import { loadIndex, markCurrentVideo, saveIndex } from "@/store";
+import { currentVideoId, currentVideoNumber, pageKind } from "@/site";
+import { addRecordToIndex, loadIndex, saveIndex } from "@/store";
 import { installListActions, installNavEntry } from "@/ui/entries";
 import { toast } from "@/ui/toast";
 
@@ -20,7 +20,8 @@ function watchDetailState(index: ReturnType<typeof loadIndex>) {
     const marked = document.querySelector(".review-title .tag.is-success");
     if (!marked) return;
     if (index.urls.has(videoId)) return;
-    index.urls.add(videoId);
+    const number = currentVideoNumber();
+    addRecordToIndex(index, { urlId: videoId, number });
     saveIndex(index);
     console.info(`[JavDB Kit] 已加入本地看过索引: ${videoId}`);
     toast("已加入本地看过索引", "success");
@@ -43,8 +44,11 @@ export function setupDetailPage() {
       toast("当前页面不是影片详情页", "danger");
       return;
     }
-    const result = markCurrentVideo(id);
-    toast(result.added ? "已加入本地看过索引" : "该影片已在索引中", result.added ? "success" : "info");
+    const before = index.records.length;
+    addRecordToIndex(index, { urlId: id, number: currentVideoNumber() });
+    saveIndex(index);
+    const added = index.records.length > before;
+    toast(added ? "已加入本地看过索引" : "该影片已在索引中", added ? "success" : "info");
   });
 }
 

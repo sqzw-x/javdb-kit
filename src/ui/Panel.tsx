@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from "../
 import { download, syncWatched, timestamp } from "../features/exporter";
 import { markList } from "../features/marker";
 import { pageKind } from "../site";
-import { addRecord, clearIndex, exportIndex, loadIndex, mergeRecords, saveIndex } from "../store";
+import { addRecord, clearIndex, exportIndex, indexBreakdown, loadIndex, mergeRecords, saveIndex } from "../store";
 import { toast } from "./toast";
 
 type Tab = "overview" | "settings" | "data";
@@ -26,11 +26,15 @@ const PAGE_LABEL: Record<string, string> = {
 export function Panel({ open, onClose }: PanelProps) {
   const [tab, setTab] = useState<Tab>("overview");
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
-  const [indexSize, setIndexSize] = useState(() => loadIndex().urls.size);
+  const [indexSize, setIndexSize] = useState(() => loadIndex().records.length);
   const [busy, setBusy] = useState<string | null>(null);
   const stopRef = useRef(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [manualInput, setManualInput] = useState("");
+  // indexSize 变化时重新读取索引, 展示 URL / 番号 / 两者兼备的数量
+  void indexSize;
+  const breakdown = indexBreakdown(loadIndex());
+  const breakdownLabel = `(URL ${breakdown.urls} / 番号 ${breakdown.numbers} / 带番号 ${breakdown.both})`;
 
   const updateSettings = useCallback((next: Settings) => {
     setSettings(next);
@@ -49,7 +53,7 @@ export function Panel({ open, onClose }: PanelProps) {
         onProgress: ({ page, cards }) => setBusy(`同步中: 第 ${page} 页 / 已读取 ${cards} 条`),
       });
       saveIndex(index);
-      setIndexSize(index.urls.size);
+      setIndexSize(index.records.length);
       // 同步完成后立刻刷新当前页徽标, 不必手动刷新
       markList(index, settings);
       toast(`已同步 ${result.pages} 页, 新增 ${result.added} 条`, "success");
@@ -75,7 +79,7 @@ export function Panel({ open, onClose }: PanelProps) {
     try {
       const text = await file.text();
       const added = mergeRecords(loadIndex(), JSON.parse(text));
-      setIndexSize(loadIndex().urls.size);
+      setIndexSize(loadIndex().records.length);
       toast(added > 0 ? `已导入 ${added} 条` : "没有新增记录", added > 0 ? "success" : "info");
     } catch (err) {
       toast(`导入失败: ${(err as Error).message}`, "danger");
@@ -88,7 +92,7 @@ export function Panel({ open, onClose }: PanelProps) {
       toast("请输入链接、影片 ID 或番号", "danger");
       return;
     }
-    setIndexSize(loadIndex().urls.size);
+    setIndexSize(loadIndex().records.length);
     setManualInput("");
     const label = result.kind === "url" ? `影片 ${result.value}` : `番号 ${result.value}`;
     toast(result.added ? `已添加 ${label}` : `${label} 已在索引中`, result.added ? "success" : "info");
@@ -196,7 +200,7 @@ export function Panel({ open, onClose }: PanelProps) {
             {tab === "overview" && (
               <div>
                 <p>
-                  本地看过索引: <strong>{indexSize}</strong> 条
+                  本地看过索引: <strong>{indexSize}</strong> 条 <span className="jdk-hint">{breakdownLabel}</span>
                 </p>
                 <p>当前页面: {PAGE_LABEL[pageKind()] ?? "其他页面"}</p>
                 {busy && <progress className="progress is-small is-info" max="100" />}

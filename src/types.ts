@@ -22,9 +22,19 @@ export interface VideoCard {
 
 export type PageKind = "video" | "watched" | "want" | "list" | "list-detail" | "other";
 
+/** 一条看过记录, 两个字段至少有一个非空 */
+export interface WatchedRecord {
+  /** /v/{id}, 缺省表示只有番号 */
+  urlId?: string;
+  /** 番号 (如 PGD-298), 缺省表示只有 urlId */
+  number?: string;
+}
+
 export interface WatchedIndex {
-  /** /v/{id} 的 id 集合 */
+  /** 结构化记录, 存储与导出的唯一来源 */
+  records: WatchedRecord[];
+  /** 由 records 派生的 urlId 集合, 仅用于匹配 */
   urls: Set<string>;
-  /** 番号集合 */
+  /** 由 records 派生的番号集合, 仅用于匹配 */
   numbers: Set<string>;
 }

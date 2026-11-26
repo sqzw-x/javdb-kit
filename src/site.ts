@@ -16,6 +16,12 @@ export function currentVideoId(path = location.pathname): string | null {
   return path.match(/^\/v\/([^/?#]+)/)?.[1] ?? null;
 }
 
+/** 详情页标题里的番号, 例如 <h2 class="title is-4"><strong>PGD-298</strong>... */
+export function currentVideoNumber(root: ParentNode = document): string {
+  const strong = root.querySelector<HTMLElement>("h2.title strong, .video-title strong");
+  return strong?.textContent?.trim() ?? "";
+}
+
 export function paginationNext(root: ParentNode = document): string | null {
   return root.querySelector<HTMLAnchorElement>("a.pagination-next")?.getAttribute("href") ?? null;
 }
