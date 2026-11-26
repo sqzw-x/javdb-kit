@@ -1,5 +1,8 @@
+import { loadIndex, saveIndex } from "@/store";
+
+import { batchMarkWatched } from "../features/batchMark";
 import { crawlList, download, timestamp, toCsv, toJson } from "../features/exporter";
-import { pageKind } from "../site";
+import { pageKind, parseCards } from "../site";
 import { openPanel } from "./mount";
 import { toast } from "./toast";
 
@@ -58,6 +61,10 @@ function buildButtons(containerClass = "buttons are-small"): HTMLDivElement {
 
   make("导出 JSON", () => void exportCurrentList("json"));
   make("CSV", () => void exportCurrentList("csv"));
+  // 「看过」列表本身不需要批量标记
+  if (pageKind() !== "watched") {
+    make("标记为看过", () => void markListAsWatched(buttons));
+  }
   return buttons;
 }
 
@@ -90,5 +97,35 @@ export function installListActions() {
     const item = document.createElement("li");
     item.append(buildButtons("jdk-inline-actions"));
     breadcrumb.append(item);
+  }
+}
+/** 把当前列表页的所有影片标记为看过, 并同步写入本地索引 */
+async function markListAsWatched(container: HTMLElement) {
+  const cards = parseCards(document);
+  if (cards.length === 0) {
+    toast("当前页面没有可标记的影片", "danger");
+    return;
+  }
+  if (!window.confirm(`把当前页的 ${cards.length} 部影片标记为看过?`)) return;
+
+  const buttons = [...container.querySelectorAll("button")];
+  for (const button of buttons) button.disabled = true;
+
+  const index = loadIndex();
+  try {
+    const result = await batchMarkWatched(
+      cards.map((card) => card.urlId),
+      { interval: 600, onProgress: (done, total) => toast(`标记中 ${done}/${total}`, "info") },
+    );
+    for (const card of cards) index.urls.add(card.urlId);
+    saveIndex(index);
+    toast(
+      result.failed.length === 0 ? `已标记 ${result.ok} 部` : `已标记 ${result.ok} 部, ${result.failed.length} 部失败`,
+      result.failed.length === 0 ? "success" : "danger",
+    );
+  } catch (err) {
+    toast(`批量标记失败: ${(err as Error).message}`, "danger");
+  } finally {
+    for (const button of buttons) button.disabled = false;
   }
 }
