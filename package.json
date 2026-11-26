@@ -1,6 +1,6 @@
 {
   "name": "javdb-kit",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "JavDB 增强插件: 观影标记 / 列表导出 / 预告片增强",
   "license": "MIT",
