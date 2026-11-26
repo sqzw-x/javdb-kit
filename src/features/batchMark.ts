@@ -2,6 +2,15 @@ import { GM_xmlhttpRequest } from "vite-plugin-monkey/dist/client";
 
 import { delay } from "../net";
 
+export interface BatchOptions {
+  /** 提交间隔 (毫秒) */
+  interval?: number;
+  onProgress?: (done: number, total: number) => void;
+  /** 每成功提交一条回调, 用于边提交边落库 */
+  onMarked?: (urlId: string) => void;
+  shouldStop?: () => boolean;
+}
+
 export interface BatchResult {
   ok: number;
   failed: { urlId: string; reason: string }[];
@@ -45,10 +54,7 @@ function submitWatched(urlId: string, token: string): Promise<void> {
  * 批量标记为看过。
  * 逐条串行提交, 落后于页面自身频率, 失败不中断, 结束后汇总。
  */
-export async function batchMarkWatched(
-  urlIds: string[],
-  options: { interval?: number; onProgress?: (done: number, total: number) => void; shouldStop?: () => boolean } = {},
-): Promise<BatchResult> {
+export async function batchMarkWatched(urlIds: string[], options: BatchOptions = {}): Promise<BatchResult> {
   const interval = options.interval ?? 600;
   const token = currentToken();
   const result: BatchResult = { ok: 0, failed: [], stopped: false };
@@ -65,6 +71,7 @@ export async function batchMarkWatched(
     try {
       await submitWatched(urlId, token);
       result.ok += 1;
+      options.onMarked?.(urlId);
     } catch (err) {
       result.failed.push({ urlId, reason: (err as Error).message });
     }

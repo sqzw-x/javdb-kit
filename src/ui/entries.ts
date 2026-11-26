@@ -99,37 +99,42 @@ export function installListActions() {
     breadcrumb.append(item);
   }
 }
-/** 把整个列表 (顺着分页) 的影片标记为看过, 并同步写入本地索引 */
+/** 边翻页边把整个列表标记为看过, 每成功一条就写入本地索引 */
 async function markListAsWatched(container: HTMLElement) {
   const buttons = [...container.querySelectorAll("button")];
   for (const button of buttons) button.disabled = true;
 
   const index = loadIndex();
+  const stats = { ok: 0, failed: 0 };
   try {
-    toast("开始收集列表…");
-    const { cards } = await crawlList(location.href, {
+    if (!window.confirm("把整个列表的影片标记为看过? 会顺着分页一直执行。")) return;
+
+    await crawlList(location.href, {
       interval: 400,
-      onProgress: ({ page, cards: total }) => toast(`收集第 ${page} 页 / ${total} 条`, "info"),
+      onProgress: ({ page, cards }) => toast(`第 ${page} 页 / 已处理 ${cards} 条`, "info"),
+      onPage: async (cards) => {
+        const result = await batchMarkWatched(
+          cards.map((card) => card.urlId),
+          {
+            interval: 600,
+            onMarked: (urlId) => {
+              index.urls.add(urlId);
+              saveIndex(index);
+            },
+          },
+        );
+        stats.ok += result.ok;
+        stats.failed += result.failed.length;
+      },
     });
 
-    if (cards.length === 0) {
-      toast("当前页面没有可标记的影片", "danger");
+    if (stats.ok === 0 && stats.failed === 0) {
+      toast("当前列表没有影片", "danger");
       return;
     }
-    if (!window.confirm(`把整个列表的 ${cards.length} 部影片标记为看过?`)) return;
-
-    const result = await batchMarkWatched(
-      cards.map((card) => card.urlId),
-      {
-        interval: 600,
-        onProgress: (done, total) => toast(`标记中 ${done}/${total}`, "info"),
-      },
-    );
-    for (const card of cards) index.urls.add(card.urlId);
-    saveIndex(index);
     toast(
-      result.failed.length === 0 ? `已标记 ${result.ok} 部` : `已标记 ${result.ok} 部, ${result.failed.length} 部失败`,
-      result.failed.length === 0 ? "success" : "danger",
+      stats.failed === 0 ? `已标记 ${stats.ok} 部` : `已标记 ${stats.ok} 部, ${stats.failed} 部失败`,
+      stats.failed === 0 ? "success" : "danger",
     );
   } catch (err) {
     toast(`批量标记失败: ${(err as Error).message}`, "danger");

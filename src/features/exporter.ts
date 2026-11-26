@@ -6,6 +6,8 @@ export interface CrawlOptions {
   interval: number;
   onProgress?: (info: { page: number; cards: number }) => void;
   shouldStop?: () => boolean;
+  /** 每解析完一页回调一次, 便于边翻页边处理 */
+  onPage?: (cards: VideoCard[], page: number) => void | Promise<void>;
 }
 
 export interface CrawlResult {
@@ -29,8 +31,10 @@ export async function crawlList(startUrl: string, options: CrawlOptions): Promis
     page += 1;
     const isCurrent = url === location.href;
     const doc = isCurrent ? document : parseHtml(await getHtml(url, { interval: options.interval }));
-    cards.push(...parseCards(doc));
+    const pageCards = parseCards(doc);
+    cards.push(...pageCards);
     options.onProgress?.({ page, cards: cards.length });
+    await options.onPage?.(pageCards, page);
 
     if (options.shouldStop?.()) {
       stopped = true;
